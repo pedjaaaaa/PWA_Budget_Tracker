@@ -1,13 +1,13 @@
 const FILES_TO_CACHE = [
   "/",
   "/index.html",
-  "/db.js",
-  "/index.js",
   "/style.css",
-
+  "/dist/app.bundle.js",
+  "/dist/db.bundle.js",
 ];
 
-const CACHE_NAME = "static-cache-v2";
+
+const CACHE_NAME = "static-cache-v1";
 const DATA_CACHE_NAME = "data-cache-v1";
 
 // install
@@ -22,7 +22,6 @@ self.addEventListener("install", function(evt) {
   self.skipWaiting();
 });
 
-// activate
 self.addEventListener("activate", function(evt) {
   evt.waitUntil(
     caches.keys().then(keyList => {
@@ -42,9 +41,7 @@ self.addEventListener("activate", function(evt) {
 
 // fetch
 self.addEventListener("fetch", function(evt) {
-  if (evt.request.url.includes("/api/")) {
-    console.log("[Service Worker] Fetch (data)", evt.request.url);
-
+  if (evt.request.url.includes("/")) {
     evt.respondWith(
       caches.open(DATA_CACHE_NAME).then(cache => {
         return fetch(evt.request)
@@ -58,8 +55,11 @@ self.addEventListener("fetch", function(evt) {
           })
           .catch(err => {
             // Network request failed, try to get it from the cache.
-            return cache.match(evt.request);
+              return cache.match(evt.request);
+            
           });
+      }).catch(err => {
+        console.log(err)
       })
     );
 
@@ -70,14 +70,6 @@ self.addEventListener("fetch", function(evt) {
     caches.open(CACHE_NAME).then(cache => {
       return cache.match(evt.request).then(response => {
         return response || fetch(evt.request);
-      });
-    })
-  );
-
-  evt.respondWith(
-    fetch(evt.request).catch(() => {
-      return caches.open(CACHE_NAME).then(cache => {
-        return cache.match("offline.html");
       });
     })
   );
